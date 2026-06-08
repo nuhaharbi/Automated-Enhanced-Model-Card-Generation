@@ -1,0 +1,2 @@
+# Thin wrapper around pyproject.toml for runtime installs.
+-e .

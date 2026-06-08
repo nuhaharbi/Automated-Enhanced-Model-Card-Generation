@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "automated-enhanced-model-card-generation"
+version = "0.1.0"
+description = "Automated generation of enhanced model cards for HuggingFace models"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31",
+    "huggingface-hub>=0.20",
+    "arxiv>=2.0",
+    "bibtexparser>=1.4.4",
+    "ghapi>=1.0",
+    "pymupdf>=1.24",
+    "marker-pdf>=1.0",
+    "fastapi>=0.109",
+    "uvicorn>=0.27",
+    "pydantic>=2.0",
+    "pandas>=2.0",
+    "beautifulsoup4>=4.12",
+    "nltk>=3.8",
+    "mistune>=3.0",
+    "regex>=2023.0",
+    "emoji>=2.0",
+    "sentence-transformers>=3.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy", "httpx>=0.27"]
+
+[tool.setuptools]
+packages = [
+    "classifier",
+    "evaluator",
+    "generator",
+    "preprocessor",
+    "retriever",
+    "webapp",
+]
+
+[tool.setuptools.package-data]
+classifier = ["resources/*.json"]
+evaluator = ["resources/*.json"]
+generator = ["resources/*.json"]
+webapp = ["static/*.html"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"

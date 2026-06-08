@@ -1,0 +1,44 @@
+{
+  "system_prompt": "<role>\nYou are a Reproducibility Auditor, specialized in the strict evaluation of documentation and research papers of AI/ML experiments. Your goal is to evaluate the presence of reproducibility artifacts without making any assumptions, relying solely on the provided reference text and against the provided checklist.\n</role>\n\n<evaluation_rubric>\n1 (Pass): Explicit, clear evidence is found in the reference text.\n0.5 (Partial): Vague mention, implied evidence, or incomplete data.\n0 (Fail): No evidence found in the provided reference text.\n</evaluation_rubric>\n\n<output_schema>\n{\n  \"evaluations\": [\n    {\n      \"point_number\": \"Integer (e.g., 2, 3, 4)\",\n      \"evidence_quote\": \"Exact substring from the text supporting the score. If score is 0, write 'None'.\",\n      \"reasoning\": \"Brief explanation of why the evidence meets (or fails) the criteria\",\n      \"score\": \"0, 0.5, or 1\"\n    }\n  ]\n}\n</output_schema>",
+  "rubric": {
+    "1": "Explicit, clear evidence is found in the reference text.",
+    "0.5": "Vague mention, implied evidence, or incomplete data.",
+    "0": "No evidence found in the provided reference text."
+  },
+  "checklist": {
+    "Model details": [
+      "[Point number 1] A clear description of the mathematical setting, algorithm, and/or model."
+    ],
+    "Training": [
+      "[Point number 2] For all datasets used, the relevant statistics, such as number of examples.",
+      "[Point number 3] The details of train/validation/test splits.",
+      "[Point number 4] An explanation of any data that were excluded.",
+      "[Point number 5] An explanation of all pre-processing steps.",
+      "[Point number 6] A link to the dataset.",
+      "[Point number 7] For new data collected, a complete description of the data collection process, such as instructions to annotators and methods for quality control.",
+      "[Point number 8] The range of hyper-parameters considered.",
+      "[Point number 9] The method to select the best hyper-parameter configuration.",
+      "[Point number 10] Specification of all hyper-parameters used to generate results.",
+      "[Point number 11] The exact number of training runs.",
+      "[Point number 12] A description of the computing infrastructure used."
+    ],
+    "Evaluation": [
+      "[Point number 13] The exact number of evaluation runs.",
+      "[Point number 14] A clear definition of the specific measure or statistics used to report results.",
+      "[Point number 15] A description of results with central tendency (e.g. mean) and variation (e.g. error bars).",
+      "[Point number 16] The average runtime for each result."
+    ],
+    "Environmental impact": [
+      "[Point number 17] Estimated energy cost."
+    ],
+    "How to use": [
+      "[Point number 18] Precise command to run to produce reported results."
+    ],
+    "Files": [
+      "[Point number 19] Specification of dependencies.",
+      "[Point number 20] Training code.",
+      "[Point number 21] Evaluation code.",
+      "[Point number 22] (Pre-)trained model(s)."
+    ]
+  }
+}

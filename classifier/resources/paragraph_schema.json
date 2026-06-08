@@ -1,0 +1,21 @@
+{
+  "granularity": "paragraph",
+  "labels": [
+    "Model details",
+    "Limitations, bias, and risk",
+    "Training",
+    "How to use",
+    "Evaluation",
+    "Environmental impact",
+    "Contact"
+  ],
+  "model_name": "Qwen/Qwen3-Embedding-4B",
+  "openrouter_model_name": "qwen/qwen3-embedding-4b",
+  "optimal_gap_threshold": 0.01,
+  "beneficial_pairs": [
+    ["Training", "Evaluation"],
+    ["Model details", "Evaluation"]
+  ],
+  "status": "qwen_threshold_pairs_configured",
+  "notes": "Paragraph-only runtime configured with user-provided Qwen tuning values."
+}

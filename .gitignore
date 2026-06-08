@@ -1,0 +1,33 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments and local env files
+.venv/
+.env
+.env.*
+
+# Test and evaluation caches
+.pytest_cache/
+.deepeval/
+
+# Packaging / build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Notebook state
+.ipynb_checkpoints/
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+
+# Local Copilot instructions should stay out of the GitHub upload.
+.github/copilot-instructions.md
+
+# Dataset tree lives in the separate dataset repository.
+Datasets/*
+

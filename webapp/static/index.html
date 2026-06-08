@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enhanced Model Card Generator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --bg: #f8f6f2;
+    --bg-soft: #fffaf0;
+    --surface: #ffffff;
+    --surface-2: #fff7e8;
+    --border: #eadfcb;
+    --text: #1f2023;
+    --muted: #6b7280;
+    --accent: #ffb100;
+    --accent-strong: #ff9d00;
+    --accent-deep: #b86a00;
+    --green: #2f9e44;
+    --orange: #c77d00;
+    --red: #d9480f;
+    --purple: #6f42c1;
+    --ring: 0 0 0 4px #ffd86a66;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Manrope', 'Avenir Next', 'Segoe UI', Helvetica, Arial, sans-serif;
+    background:
+      linear-gradient(180deg, rgba(255, 219, 126, 0.36) 0%, rgba(255, 219, 126, 0.20) 16%, rgba(255, 219, 126, 0.08) 30%, rgba(255, 219, 126, 0) 100%) top center / 100% 300px no-repeat,
+      var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── Header ─────────────────────────────── */
+  header {
+    background: color-mix(in srgb, var(--surface) 92%, #fff2cc 8%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    backdrop-filter: blur(8px);
+  }
+  header h1 {
+    max-width: 1320px;
+    margin: 0 auto;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  /* ── Controls ────────────────────────────── */
+    .search-area { max-width: 1320px; margin: 34px auto 0; padding: 0 24px; }
+  .control-grid { display: grid; grid-template-columns: 1.45fr 1fr; gap: 12px; align-items: start; }
+  .control-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 14px 34px #9a7b2f16;
+    padding: 16px 18px;
+    min-width: 0;
+  }
+  .control-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: #7a4b00;
+    letter-spacing: 0.2px;
+    margin-bottom: 10px;
+  }
+  .search-box { display: flex; gap: 8px; }
+  .search-box input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 12px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 14px; outline: none; transition: box-shadow .2s, border-color .2s; }
+    .search-box input:focus { border-color: var(--accent-strong); box-shadow: var(--ring); }
+  .search-box input::placeholder { color: var(--muted); }
+  .search-box button { padding: 12px 20px; border-radius: 12px; border: none;
+      background: #20232a; color: #fff; font-weight: 700; font-size: 14px;
+      cursor: pointer; white-space: nowrap; transition: transform .12s ease, box-shadow .2s ease, background .2s ease; }
+    .search-box button:hover { background: #111318; }
+  .search-box button:active { transform: translateY(1px); }
+  .search-box button:disabled { opacity: .5; cursor: not-allowed; }
+    .search-box button.secondary {
+      background: linear-gradient(180deg, #ffd76a, var(--accent));
+      color: #1f2023;
+      border: 1px solid #d79700;
+      box-shadow: 0 8px 18px #d7970030;
+    }
+    .search-box button.secondary:hover {
+      background: linear-gradient(180deg, #ffdc7e, var(--accent-strong));
+      box-shadow: 0 10px 22px #d7970040;
+    }
+  .search-box button.warning { background: #9a6700; }
+  .search-box button.warning:hover { background: #bf8700; }
+  .search-box button.outline {
+    background: #fffaf0;
+    color: #6c4b00;
+    border: 1px solid #d8bd86;
+    box-shadow: 0 8px 16px #9a7b2f18;
+  }
+  .search-box button.outline:hover {
+    background: #fff2d6;
+    border-color: #c99b3f;
+  }
+
+  /* ── Status bar ─────────────────────────── */
+  .status { text-align: center; margin-top: 12px; font-size: 13px; color: var(--muted);
+            min-height: 20px; font-weight: 600; }
+  .status.error { color: var(--red); }
+
+  .settings-row { margin-top: 8px; display: flex; gap: 8px; }
+  .setting-group { display: flex; flex-direction: column; gap: 4px; min-width: 180px; flex: 1; }
+  .setting-group.is-hidden { display: none; }
+  .input-with-action { display: flex; align-items: center; gap: 6px; }
+  .input-with-action { min-width: 0; }
+  .input-with-action input { flex: 1; }
+  .input-with-action button {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff8e8;
+    color: #6f4200;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .input-with-action button:hover {
+    background: #fff0ca;
+    border-color: #d8b16b;
+  }
+  .setting-group label { font-size: 11px; color: var(--muted); }
+  .pipeline-card .settings-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .pipeline-card .setting-group {
+    min-width: 220px;
+    flex: 1 1 220px;
+  }
+  .pipeline-card .setting-group label { font-size: 12px; }
+  .settings-row input { flex: 1; width: 100%; min-width: 0; padding: 8px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 12px; outline: none; }
+    .settings-row select { width: 100%; min-width: 0; padding: 8px 10px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); font-size: 12px; outline: none; min-width: 170px; }
+  .settings-row input:focus { border-color: var(--accent-strong); box-shadow: var(--ring); }
+  .sample-card .search-box { width: 100%; }
+  .sample-card .search-box button { width: 100%; }
+
+  /* ── Tab container ──────────────────────── */
+  .results { max-width: 1320px; margin: 24px auto; padding: 0 24px; display: none; }
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 6px;
+    border: 1px solid var(--border);
+        border-radius: 16px;
+    background: #fffaf0;
+    overflow-x: auto;
+        box-shadow: 0 8px 20px #9a7b2f10;
+  }
+  .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--muted);
+          cursor: pointer; border: 1px solid transparent; border-radius: 12px; transition: .15s;
+         white-space: nowrap; }
+  .tab.hidden { display: none; }
+  .tab:hover { color: var(--text); background: #fff2d6; }
+  .tab.active {
+    color: #1d2129;
+    background: linear-gradient(180deg, #ffe39d 0%, #ffd15c 100%);
+    border-color: #e0ad24;
+    box-shadow: inset 0 -1px 0 #c28600;
+    font-weight: 700;
+  }
+  /* ── Panel (each artifact) ──────────────── */
+  .panel {
+    display: none;
+    padding-top: 16px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: 0 16px 36px #9a7b2f18;
+    padding: 16px;
+  }
+  .panel.active { display: block; }
+
+  .no-data { text-align: center; padding: 48px 0; color: var(--muted); font-size: 14px; }
+  .progress-card {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: linear-gradient(180deg, #fff8e8 0%, #fffdf8 100%);
+    padding: 16px;
+  }
+  .progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .progress-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #7a4b00;
+  }
+  .progress-meta {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .progress-subtitle {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #f0e2c3;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-bar span {
+    display: block;
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ffb100 0%, #ff8e00 100%);
+    transition: width .2s ease;
+  }
+  .progress-message {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  /* ── Split-level selector ───────────────── */
+    .split-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .split-tab { padding: 5px 14px; font-size: 12px; border-radius: 16px;
+      border: 1px solid var(--border); background: transparent; color: var(--muted);
+      cursor: pointer; transition: .15s; font-weight: 600; }
+  .split-tab:hover { color: var(--text); border-color: var(--muted); }
+  .split-tab.active { background: #1f6feb22; border-color: var(--accent); color: var(--accent); }
+  .split-tab.active {
+    background: #ffeec0;
+    border-color: #f0b429;
+    color: #7a4b00;
+    font-weight: 700;
+  }
+
+  .split-view { display: none; }
+  .split-view.active { display: block; }
+
+  .artifact-view { display: none; }
+  .artifact-view.active { display: block; }
+
+  /* ── Sentence / paragraph items ─────────── */
+  .item-list { list-style: none; counter-reset: item; }
+  .item-list li { padding: 8px 12px; border-left: 3px solid var(--border);
+      margin-bottom: 6px; font-size: 13px; line-height: 1.55;
+      background: #fffefb; border-radius: 0 10px 10px 0;
+      word-break: break-word; counter-increment: item; position: relative;
+      padding-left: 42px; }
+  .item-list li::before { content: counter(item); position: absolute; left: 10px;
+      top: 9px; color: var(--muted); font-size: 11px; font-weight: 600;
+      min-width: 20px; text-align: right; }
+
+  /* colour-code placeholder tokens */
+  .ph-link { color: var(--accent); font-weight: 500; }
+  .ph-email { color: var(--purple); font-weight: 500; }
+  .ph-code { color: var(--orange); font-weight: 500; }
+  .ph-math { color: var(--green); font-weight: 500; }
+
+  /* ── Metadata chips (links, emails, codes) ─ */
+  .meta-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .chip { font-size: 12px; padding: 3px 10px; border-radius: 14px;
+      background: #fffef8; border: 1px solid var(--border); }
+  .chip.link { border-color: #1f6feb55; color: var(--accent); }
+  .chip.email { border-color: #bc8cff44; color: var(--purple); }
+  .chip.code { border-color: #d2992255; color: var(--orange); }
+  .chip.math { border-color: #3fb95055; color: var(--green); }
+
+  .processed-link-banner {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid #e0ad24;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #fff7da 0%, #fff1c2 100%);
+    color: #6f4200;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+  .processed-link-banner .processed-link-label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #8c5a00;
+    font-weight: 800;
+  }
+  .processed-link-banner a {
+    color: #0b65c2;
+    text-decoration: underline;
+    word-break: break-all;
+  }
+
+    /* ── Classification rows ───────────────────── */
+    .pred-list { list-style: none; }
+    .pred-list li { padding: 10px 12px; border-left: 3px solid var(--border);
+      margin-bottom: 8px; background: #fffefb; border-radius: 0 8px 8px 0; }
+    .pred-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .pred-label { font-size: 11px; padding: 2px 8px; border-radius: 12px;
+      border: 1px solid #1f6feb55; color: var(--accent); }
+    .pred-score { font-size: 11px; color: var(--muted); }
+    .pred-text { font-size: 13px; line-height: 1.5; word-break: break-word; }
+
+    .score-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin-bottom: 12px; }
+    .score-card { border: 1px solid var(--border); border-radius: 10px; background: #fffef9; padding: 10px; }
+    .score-card .k { font-size: 12px; color: var(--muted); }
+    .score-card .v { font-size: 18px; color: var(--text); font-weight: 600; }
+    .eval-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .eval-table th, .eval-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    .eval-table th { background: #fff1cc; color: #704200; }
+
+    .md-render h1, .md-render h2, .md-render h3, .md-render h4 {
+      margin: 10px 0 8px;
+      line-height: 1.3;
+    }
+    .md-render h1 { font-size: 20px; }
+    .md-render h2 { font-size: 18px; }
+    .md-render h3 { font-size: 16px; }
+    .md-render h4 { font-size: 14px; }
+    .md-render p { margin: 8px 0; }
+    .md-render ul { margin: 6px 0 8px 18px; }
+    .md-render li { margin: 2px 0; }
+    .md-render a.md-link {
+      color: #0b65c2;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-all;
+    }
+    .md-render a.md-link:hover {
+      color: #084b8a;
+    }
+    .md-render pre {
+      background: #fff8e8;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .md-render pre code {
+      background: transparent;
+      border: none;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: pre;
+      display: block;
+    }
+    .md-render code {
+      background: #fff2cf;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-size: 12px;
+    }
+    .math-inline {
+      display: inline-block;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-style: italic;
+      background: #fff7e3;
+      border: 1px solid #ecd8ad;
+      border-radius: 6px;
+      padding: 0 6px;
+      color: #5e4200;
+      white-space: nowrap;
+    }
+    .math-block {
+      display: block;
+      margin: 10px 0;
+      text-align: center;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-style: italic;
+      background: #fff7e3;
+      border: 1px solid #ecd8ad;
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #5e4200;
+      overflow-x: auto;
+    }
+    .math-frac {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: middle;
+      margin: 0 2px;
+      line-height: 1.1;
+    }
+    .math-frac .num,
+    .math-frac .den {
+      display: block;
+      white-space: nowrap;
+      padding: 0 3px;
+    }
+    .math-frac .num {
+      border-bottom: 1px solid currentColor;
+    }
+
+    .generated-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .generated-section {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fffef9;
+      padding: 12px;
+      display: block;
+    }
+    .generated-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6f4200;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #f0e0c1;
+      padding-bottom: 6px;
+    }
+    .generated-section-content {
+      max-height: 320px;
+      overflow: auto;
+      padding-right: 4px;
+      overscroll-behavior: contain;
+    }
+
+    @media (max-width: 1100px) {
+      header {
+        padding: 12px 16px;
+      }
+
+      header h1 {
+        font-size: 18px;
+      }
+
+      .search-area {
+        margin-top: 20px;
+        padding: 0 16px;
+      }
+
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  @media (max-width: 860px) {
+    .search-box { flex-direction: column; }
+    .search-box button { width: 100%; }
+    .settings-row { flex-direction: column; }
+    .tabs { padding: 4px; }
+    .tab { padding: 8px 12px; }
+    .panel { padding: 12px; }
+    .generated-grid { grid-template-columns: 1fr; }
+    .generated-section-content { max-height: 260px; }
+  }
+
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Enhanced Model Card Generator</h1>
+</header>
+
+<!-- Search -->
+<div class="search-area">
+  <div class="control-grid">
+    <div class="control-card pipeline-card">
+      <div class="control-title">Pipeline Settings</div>
+      <div class="settings-row" style="margin-top:0;">
+        <div class="setting-group">
+          <label for="embeddingBackendSelect">Embedding and Generator Backend</label>
+          <select id="embeddingBackendSelect">
+            <option value="openrouter">OpenRouter</option>
+            <option value="local">Local</option>
+          </select>
+        </div>
+        <div class="setting-group" id="openrouterApiKeyGroup">
+          <label for="openrouterApiKeyInput">OpenRouter API Key</label>
+          <div class="input-with-action">
+            <input id="openrouterApiKeyInput" type="password" placeholder="sk-or-v1-..." autocomplete="off">
+            <button id="toggleOpenrouterApiKeyBtn" type="button" aria-label="Toggle API key visibility">Show</button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <label for="openrouterEmbeddingModelInput">Embedding Model</label>
+          <input id="openrouterEmbeddingModelInput" type="text" placeholder="e.g. qwen/qwen3-embedding-4b">
+        </div>
+      </div>
+      <div class="settings-row">
+        <div class="setting-group">
+          <label for="generatorModelInput">Generation LLM Model</label>
+          <input id="generatorModelInput" type="text" placeholder="e.g. google/gemini-2.5-flash">
+        </div>
+        <div class="setting-group">
+          <label for="tableSummarizationSelect">Table Summarization</label>
+          <select id="tableSummarizationSelect">
+            <option value="false">Off</option>
+            <option value="true">On</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="evaluatorModelInput">Evaluator Model</label>
+          <input id="evaluatorModelInput" type="text" value="openai/gpt-oss-20b" readonly>
+        </div>
+        <div class="setting-group">
+          <label for="modalUrlInput">Your Modal Evaluator Endpoint</label>
+          <input id="modalUrlInput" type="text" placeholder="Paste your own evaluator endpoint URL here.">
+        </div>
+      </div>
+    </div>
+
+    <div class="control-card sample-card">
+      <div class="control-title">Sample Selection</div>
+      <div class="settings-row" style="margin-top:0;">
+        <div class="setting-group">
+          <label for="sampleSelect">Available Sample Models</label>
+          <select id="sampleSelect">
+            <option value="">Loading sample list...</option>
+          </select>
+        </div>
+      </div>
+      <div class="search-box" style="margin-top:10px;">
+        <button id="sampleBtn" class="outline" onclick="loadSampleCardPreview()">Preview Selected Sample</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-box" style="margin-top:10px;">
+    <input id="modelInput" type="text" placeholder="Enter HuggingFace model ID (e.g. google-bert/bert-base-uncased)" spellcheck="false">
+    <button id="generateBtn" class="secondary" onclick="generateModelCard()">Generate</button>
+  </div>
+  <div id="status" class="status"></div>
+</div>
+
+<!-- Tabs: Model Card | GitHub README | Paper -->
+<div id="results" class="results">
+  <div class="tabs">
+    <div id="tab-gen" class="tab hidden" data-panel="gen">Generated Card</div>
+    <div id="tab-ev" class="tab hidden" data-panel="ev">Reproducibility Scoring Report</div>
+    <div id="tab-mc" class="tab active" data-panel="mc">Model Card</div>
+    <div id="tab-gh" class="tab" data-panel="gh">GitHub README</div>
+    <div id="tab-pp" class="tab" data-panel="pp">Paper</div>
+  </div>
+
+  <!-- Model Card panel -->
+  <div id="panel-mc" class="panel active"></div>
+
+  <!-- GitHub README panel -->
+  <div id="panel-gh" class="panel"></div>
+
+  <!-- Paper panel -->
+  <div id="panel-pp" class="panel"></div>
+
+  <!-- Evaluator panel -->
+  <div id="panel-ev" class="panel"></div>
+
+  <!-- Generator panel -->
+  <div id="panel-gen" class="panel"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+const MODAL_URL_STORAGE_KEY = 'emc_modal_evaluator_url';
+const EMBEDDING_BACKEND_STORAGE_KEY = 'emc_embedding_backend';
+const OPENROUTER_MODEL_STORAGE_KEY = 'emc_openrouter_embedding_model';
+const GENERATOR_MODEL_STORAGE_KEY = 'emc_generator_model';
+const TABLE_SUMMARIZATION_STORAGE_KEY = 'emc_table_summarization';
+
+async function loadSampleList() {
+  const sel = $('#sampleSelect');
+  if (!sel) return;
+
+  try {
+    const res = await fetch('/sample-generated-cards');
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const rows = Array.isArray(data?.samples) ? data.samples : [];
+
+    if (!rows.length) {
+      sel.innerHTML = '<option value="">No samples found</option>';
+      return;
+    }
+
+    sel.innerHTML = '<option value="">Select a sample model...</option>';
+    rows.forEach((r) => {
+      const scoreText = (typeof r.repro_score === 'number')
+        ? ` | score ${Number(r.repro_score).toFixed(1)}/22`
+        : '';
+      const taskText = r.task ? ` | ${r.task}` : '';
+      const opt = document.createElement('option');
+      opt.value = r.model_id;
+      opt.textContent = `${r.model_id}${taskText}${scoreText}`;
+      sel.appendChild(opt);
+    });
+  } catch (e) {
+    sel.innerHTML = '<option value="">Could not load sample list</option>';
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────
+$$('.tab').forEach(t => t.addEventListener('click', () => {
+  $$('.tab').forEach(x => x.classList.remove('active'));
+  $$('.panel').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  $(`#panel-${t.dataset.panel}`).classList.add('active');
+}));
+
+$('#sampleSelect').addEventListener('change', e => {
+  const modelId = String(e.target.value || '').trim();
+  if (!modelId) return;
+  const modelInput = $('#modelInput');
+  if (modelInput) {
+    modelInput.value = modelId;
+  }
+});
+
+// Enter key triggers generation.
+$('#modelInput').addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+const savedModalUrl = localStorage.getItem(MODAL_URL_STORAGE_KEY);
+if (savedModalUrl) {
+  $('#modalUrlInput').value = savedModalUrl;
+}
+
+$('#modalUrlInput').addEventListener('change', e => {
+  localStorage.setItem(MODAL_URL_STORAGE_KEY, e.target.value.trim());
+});
+
+const savedEmbeddingBackend = localStorage.getItem(EMBEDDING_BACKEND_STORAGE_KEY);
+if (savedEmbeddingBackend) {
+  $('#embeddingBackendSelect').value = savedEmbeddingBackend;
+}
+$('#embeddingBackendSelect').addEventListener('change', e => {
+  localStorage.setItem(EMBEDDING_BACKEND_STORAGE_KEY, e.target.value);
+  updateOpenRouterSettingsVisibility();
+});
+updateOpenRouterSettingsVisibility();
+
+const savedEmbeddingModel = localStorage.getItem(OPENROUTER_MODEL_STORAGE_KEY);
+if (savedEmbeddingModel) {
+  $('#openrouterEmbeddingModelInput').value = savedEmbeddingModel;
+} else {
+  $('#openrouterEmbeddingModelInput').value = 'qwen/qwen3-embedding-4b';
+}
+$('#openrouterEmbeddingModelInput').addEventListener('change', e => {
+  localStorage.setItem(OPENROUTER_MODEL_STORAGE_KEY, e.target.value.trim());
+});
+
+const savedGeneratorModel = localStorage.getItem(GENERATOR_MODEL_STORAGE_KEY);
+if (savedGeneratorModel) {
+  $('#generatorModelInput').value = savedGeneratorModel;
+} else {
+  $('#generatorModelInput').value = 'google/gemini-2.5-flash';
+}
+$('#generatorModelInput').addEventListener('change', e => {
+  localStorage.setItem(GENERATOR_MODEL_STORAGE_KEY, e.target.value.trim());
+});
+
+const savedTableSummarization = localStorage.getItem(TABLE_SUMMARIZATION_STORAGE_KEY);
+if (savedTableSummarization === 'true' || savedTableSummarization === 'false') {
+  $('#tableSummarizationSelect').value = savedTableSummarization;
+} else {
+  $('#tableSummarizationSelect').value = 'false';
+}
+$('#tableSummarizationSelect').addEventListener('change', e => {
+  localStorage.setItem(TABLE_SUMMARIZATION_STORAGE_KEY, e.target.value);
+});
+
+$('#toggleOpenrouterApiKeyBtn').addEventListener('click', () => {
+  const keyInput = $('#openrouterApiKeyInput');
+  const toggleBtn = $('#toggleOpenrouterApiKeyBtn');
+  if (!keyInput || !toggleBtn) return;
+  const shouldShow = keyInput.type === 'password';
+  keyInput.type = shouldShow ? 'text' : 'password';
+  toggleBtn.textContent = shouldShow ? 'Hide' : 'Show';
+});
+
+function useTableSummarization() {
+  return String($('#tableSummarizationSelect')?.value || 'false').toLowerCase() === 'true';
+}
+
+function classifierSettingsPayload() {
+  const embeddingBackend = $('#embeddingBackendSelect').value;
+  const openrouterEmbeddingModel = $('#openrouterEmbeddingModelInput').value.trim() || 'qwen/qwen3-embedding-4b';
+  const openrouterApiKey = $('#openrouterApiKeyInput').value.trim();
+  return {
+    embedding_backend: embeddingBackend,
+    openrouter_embedding_model: openrouterEmbeddingModel,
+    openrouter_api_key: openrouterApiKey || null,
+  };
+}
+
+function updateOpenRouterSettingsVisibility() {
+  const backend = $('#embeddingBackendSelect').value;
+  const shouldShow = backend === 'openrouter';
+  const apiKeyGroup = $('#openrouterApiKeyGroup');
+  if (apiKeyGroup) {
+    apiKeyGroup.classList.toggle('is-hidden', !shouldShow);
+  }
+}
+
+function tuningStatusSummary(ts) {
+  if (!ts || typeof ts !== 'object') return '';
+  if (!ts.tuned) {
+    return 'using default threshold/pairs';
+  }
+
+  const v = ts?.tuned_scores?.validation_macro_f1;
+  const t = ts?.tuned_scores?.testing_macro_f1;
+  const bv = ts?.baseline?.validation_macro_f1;
+  const bt = ts?.baseline?.testing_macro_f1;
+
+  const vf = (typeof v === 'number') ? v.toFixed(4) : 'n/a';
+  const tf = (typeof t === 'number') ? t.toFixed(4) : 'n/a';
+  const bvf = (typeof bv === 'number') ? bv.toFixed(4) : 'n/a';
+  const btf = (typeof bt === 'number') ? bt.toFixed(4) : 'n/a';
+
+  return `tuned on labeled split | val F1: ${vf} (baseline ${bvf}) | test F1: ${tf} (baseline ${btf})`;
+}
+
+// ── Highlight placeholders ─────────────────────────────────────
+function highlight(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\[(\d+):LINK\]/g, '<span class="ph-link">[$1:LINK]</span>')
+    .replace(/\[(\d+):EMAIL\]/g, '<span class="ph-email">[$1:EMAIL]</span>')
+    .replace(/\[(\d+):CODE\]/g, '<span class="ph-code">[$1:CODE]</span>')
+    .replace(/\[(\d+):MATH\]/g, '<span class="ph-math">[$1:MATH]</span>');
+}
+
+// ── Build a panel for markdown artifacts ───────────────────────
+function buildMarkdownPanel(data) {
+  if (!data.success) return '<div class="no-data">No data available for this artifact.</div>';
+
+  const meta = [];
+  if (data.links?.length)
+    data.links.forEach((l, i) => meta.push(`<span class="chip link" title="${esc(l)}">[${i}:LINK] ${shorten(l, 50)}</span>`));
+  if (data.emails?.length)
+    data.emails.forEach((e, i) => meta.push(`<span class="chip email">[${i}:EMAIL] ${esc(e)}</span>`));
+  if (data.codes_count)
+    meta.push(`<span class="chip code">${data.codes_count} code block${data.codes_count > 1 ? 's' : ''}</span>`);
+
+  return `
+    ${meta.length ? '<div class="meta-row">' + meta.join('') + '</div>' : ''}
+    ${splitTabs('sections_split', 'paragraphs_split', 'sentences_split', data)}
+  `;
+}
+
+// ── Build a panel for the paper artifact ───────────────────────
+function buildPaperPanel(data) {
+  if (!data.success) return '<div class="no-data">No paper found for this model.</div>';
+
+  const meta = [];
+  if (data.links_map) {
+    for (const [k, v] of Object.entries(data.links_map))
+      meta.push(`<span class="chip link" title="${esc(v)}">${esc(k)} ${shorten(v, 45)}</span>`);
+  }
+  if (data.math_map && Object.keys(data.math_map).length)
+    meta.push(`<span class="chip math">${Object.keys(data.math_map).length} math expression${Object.keys(data.math_map).length > 1 ? 's' : ''}</span>`);
+  if (data.table_descriptions?.length)
+    meta.push(`<span class="chip code">${data.table_descriptions.length} table description${data.table_descriptions.length > 1 ? 's' : ''}</span>`);
+
+  return `
+    ${meta.length ? '<div class="meta-row">' + meta.join('') + '</div>' : ''}
+    ${splitTabs('sections_split', 'paragraphs_split', 'sentences_split', data)}
+  `;
+}
+
+// ── Reusable split-level tab group ─────────────────────────────
+function splitTabs(secKey, parKey, senKey, data) {
+  const uid = Math.random().toString(36).slice(2, 8);
+  const build = (items) => {
+    if (!items?.length) return '<div class="no-data">Empty.</div>';
+    return '<ol class="item-list">' + items.map(i => `<li>${highlight(i)}</li>`).join('') + '</ol>';
+  };
+
+  return `
+    <div class="split-tabs" data-group="${uid}">
+      <button class="split-tab active" data-view="${uid}-sec">Sections (${data[secKey]?.length || 0})</button>
+      <button class="split-tab" data-view="${uid}-par">Paragraphs (${data[parKey]?.length || 0})</button>
+      <button class="split-tab" data-view="${uid}-sen">Sentences (${data[senKey]?.length || 0})</button>
+    </div>
+    <div id="${uid}-sec" class="split-view active">${build(data[secKey])}</div>
+    <div id="${uid}-par" class="split-view">${build(data[parKey])}</div>
+    <div id="${uid}-sen" class="split-view">${build(data[senKey])}</div>
+  `;
+}
+
+// ── Attach split-tab click handlers (delegated) ────────────────
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.split-tab');
+  if (!btn) return;
+  const group = btn.parentElement.dataset.group;
+  btn.parentElement.querySelectorAll('.split-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll(`.split-view`).forEach(v => {
+    if (v.id.startsWith(group)) v.classList.remove('active');
+  });
+  document.getElementById(btn.dataset.view).classList.add('active');
+});
+
+// ── Helpers ────────────────────────────────────────────────────
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+function shorten(s, n) { return s.length > n ? esc(s.slice(0, n)) + '…' : esc(s); }
+
+function buildClassificationPanel(data) {
+  if (!data?.predictions?.length) {
+    return '<div class="no-data">No paragraph classifications for this artifact.</div>';
+  }
+
+  const grouped = {};
+  data.predictions.forEach(p => {
+    const key = p.predicted_label || 'Unknown';
+    grouped[key] = (grouped[key] || 0) + 1;
+  });
+
+  const chips = Object.entries(grouped)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, count]) => `<span class="chip link">${esc(label)}: ${count}</span>`)
+    .join('');
+
+  const items = data.predictions.map(p => {
+    const conf = typeof p.confidence === 'number' ? p.confidence.toFixed(4) : '0.0000';
+    const top2 = p.top2_label ? ` | Top2: ${esc(p.top2_label)} (${Number(p.top2_confidence || 0).toFixed(4)})` : '';
+    const rerank = p.applied_rerank_rule ? ' | reranked' : '';
+    return `
+      <li>
+        <div class="pred-head">
+          <span class="pred-label">${esc(p.predicted_label || 'Unknown')}</span>
+          <span class="pred-score">Confidence: ${conf}${top2}${rerank}</span>
+        </div>
+        <div class="pred-text">${highlight(p.paragraph || '')}</div>
+      </li>
+    `;
+  }).join('');
+
+  return `
+    <div class="meta-row">${chips}</div>
+    <ol class="pred-list">${items}</ol>
+  `;
+}
+
+function buildEvaluationPanel(data) {
+  if (data?.success === false && !(data.section_evaluations || []).length) {
+    return `<div class="no-data">Evaluation failed: ${esc(data?.error || 'unknown error')}</div>`;
+  }
+
+  const CHECKLIST_BY_POINT = {
+    1: 'A clear description of the mathematical setting, algorithm, and/or model.',
+    2: 'For all datasets used, the relevant statistics, such as number of examples.',
+    3: 'The details of train/validation/test splits.',
+    4: 'An explanation of any data that were excluded.',
+    5: 'An explanation of all pre-processing steps.',
+    6: 'A link to the dataset.',
+    7: 'For new data collected, a complete description of the data collection process, such as instructions to annotators and methods for quality control.',
+    8: 'The range of hyper-parameters considered.',
+    9: 'The method to select the best hyper-parameter configuration.',
+    10: 'Specification of all hyper-parameters used to generate results.',
+    11: 'The exact number of training runs.',
+    12: 'A description of the computing infrastructure used.',
+    13: 'The exact number of evaluation runs.',
+    14: 'A clear definition of the specific measure or statistics used to report results.',
+    15: 'A description of results with central tendency (e.g. mean) and variation (e.g. error bars).',
+    16: 'The average runtime for each result.',
+    17: 'Estimated energy cost.',
+    18: 'Precise command to run to produce reported results.',
+    19: 'Specification of dependencies.',
+    20: 'Training code.',
+    21: 'Evaluation code.',
+    22: '(Pre-)trained model(s).',
+  };
+
+  const SECTION_MAX_POINTS = {
+    'Model details': 1,
+    'Training': 11,
+    'Evaluation': 4,
+    'Environmental impact': 1,
+    'How to use': 1,
+    'Files': 4,
+  };
+
+  const SECTION_DISPLAY_NAME = {
+    'Files': 'Code',
+  };
+
+  const maxChecklistScore = Object.keys(CHECKLIST_BY_POINT).length;
+  const rawTotal = Number(data.total_score || 0);
+  const percentTotal = maxChecklistScore > 0 ? (rawTotal / maxChecklistScore) * 100 : 0;
+  const totalDisplay = `${rawTotal.toFixed(1)} / ${maxChecklistScore}`;
+  const percentDisplay = `${percentTotal.toFixed(1)}%`;
+
+  const sectionCards = Object.entries(data.section_scores || {})
+    .map(([k, v]) => {
+      const score = Number(v || 0);
+      const maxPts = SECTION_MAX_POINTS[k] || 0;
+      const scoreText = Number.isInteger(score) ? String(score) : score.toFixed(1);
+      const valueText = maxPts > 0 ? `${scoreText}/${maxPts}` : scoreText;
+      const displayName = SECTION_DISPLAY_NAME[k] || k;
+      return `<div class="score-card"><div class="k">${esc(displayName)}</div><div class="v">${valueText}</div></div>`;
+    })
+    .join('');
+
+  let rows = '';
+  (data.section_evaluations || []).forEach(sec => {
+    (sec.evaluations || []).forEach(item => {
+      rows += `<tr>
+        <td>${esc(SECTION_DISPLAY_NAME[sec.section] || sec.section)}</td>
+        <td><strong>P${item.point_number}</strong> ${esc(CHECKLIST_BY_POINT[item.point_number] || 'Checklist item not found')}</td>
+        <td>${item.score}</td>
+        <td>${esc(item.evidence_quote || 'None')}</td>
+        <td>${esc(item.reasoning || '')}</td>
+      </tr>`;
+    });
+  });
+
+  return `
+    <div class="score-grid">
+      <div class="score-card"><div class="k">Total Score</div><div class="v">${totalDisplay}</div></div>
+      <div class="score-card"><div class="k">Percentage</div><div class="v">${percentDisplay}</div></div>
+    </div>
+    <div class="score-grid">${sectionCards}</div>
+    <table class="eval-table">
+      <thead>
+        <tr><th>Section</th><th>Checklist</th><th>Score</th><th>Evidence</th><th>Reasoning</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function buildChunkArtifactPanel(data, sourceName) {
+  const paragraphs = Array.isArray(data?.paragraphs_split) ? data.paragraphs_split : [];
+  const links = Array.isArray(data?.links) ? data.links : [];
+  const sourceLink = String(data?.source_link || '').trim();
+
+  const sourceBanner = sourceLink
+    ? `<div class="processed-link-banner"><span class="processed-link-label">Processed Link</span><a class="md-link" href="${esc(sourceLink)}" target="_blank" rel="noopener noreferrer">${esc(sourceLink)}</a></div>`
+    : '';
+
+  const meta = [];
+  if (sourceLink) {
+    meta.push(`<span class="chip link" title="${esc(sourceLink)}">Extracted Link: <a class="md-link" href="${esc(sourceLink)}" target="_blank" rel="noopener noreferrer">${shorten(sourceLink, 65)}</a></span>`);
+  }
+  links.forEach((l, i) => {
+    meta.push(`<span class="chip link" title="${esc(l)}">L${i + 1}: <a class="md-link" href="${esc(l)}" target="_blank" rel="noopener noreferrer">${shorten(l, 55)}</a></span>`);
+  });
+
+  if (!paragraphs.length && !links.length && !sourceLink) {
+    return `<div class="no-data">No preprocessed chunks available for ${esc(sourceName)}.</div>`;
+  }
+
+  const items = paragraphs.length
+    ? `<ol class="item-list">${paragraphs.map((p) => `<li>${highlight(String(p || ''))}</li>`).join('')}</ol>`
+    : `<div class="no-data">No preprocessed paragraph chunks available for ${esc(sourceName)}.</div>`;
+
+  return `${sourceBanner}${meta.length ? `<div class="meta-row">${meta.join('')}</div>` : ''}${items}`;
+}
+
+function inlineMarkdown(line) {
+  const normalizeMathTypos = (s) => {
+    let out = String(s || '');
+
+    // Normalize a common extraction artifact: "∑i=15" -> "∑_{i=1}^{5}".
+    out = out.replace(/∑\s*i\s*=\s*1\s*5/g, '∑_{i=1}^{5}');
+    out = out.replace(/\\sum\s*i\s*=\s*1\s*5/g, '\\sum_{i=1}^{5}');
+
+    // Normalize compact "si" variable into subscript form in math contexts.
+    out = out.replace(/\bsi\b/g, 's_i');
+
+    return out;
+  };
+
+  const renderLatexLikeInline = (s) => {
+    let out = normalizeMathTypos(String(s || ''));
+
+    // Decode common entities that may appear inside extracted <math> payloads.
+    out = out.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+
+    // Common set symbols.
+    out = out.replace(/\\+mathbb\{R\}/g, 'ℝ');
+    out = out.replace(/\\+mathbb\{N\}/g, 'ℕ');
+    out = out.replace(/\\+mathbb\{Z\}/g, 'ℤ');
+    out = out.replace(/\\+mathbb\{Q\}/g, 'ℚ');
+    out = out.replace(/\\+mathbb\{C\}/g, 'ℂ');
+
+    // Common operators.
+    out = out.replace(/\\+in(?=\s|$|[.,;:!?\)\]])/g, '&isin;');
+    out = out.replace(/\\+approx(?=\s|$|[.,;:!?\)\]])/g, '&asymp;');
+    out = out.replace(/\\+times(?=\s|$|[.,;:!?\)\]])/g, '&times;');
+    out = out.replace(/\\+cdot(?=\s|$|[.,;:!?\)\]])/g, '&middot;');
+    out = out.replace(/\\+geq(?=\s|$|[.,;:!?\)\]])/g, '&ge;');
+    out = out.replace(/\\+leq(?=\s|$|[.,;:!?\)\]])/g, '&le;');
+    out = out.replace(/\\+neq(?=\s|$|[.,;:!?\)\]])/g, '&ne;');
+    out = out.replace(/\\+sum(?=\s|$|[_^\{\(])/g, '&sum;');
+    out = out.replace(/\\+mid(?=\s|$|[.,;:!?\)\]])/g, '|');
+    out = out.replace(/\\+theta(?=\s|$|[.,;:!?\)\]_\^}])/g, '&theta;');
+    out = out.replace(/\\+log(?=\s|$|[\(\{])/g, 'log');
+
+    // Font commands.
+    out = out.replace(/\\+mathrm\{([^{}]+)\}/g, '<span class="math-inline">$1</span>');
+    out = out.replace(/\\+mathbb\{I\}/g, '𝕀');
+
+    // Fractions (non-nested brace groups).
+    out = out.replace(
+      /\\+frac\{([^{}]+)\}\{([^{}]+)\}/g,
+      '<span class="math-frac"><span class="num">$1</span><span class="den">$2</span></span>',
+    );
+
+    // Super/subscripts are handled only inside explicit math fragments.
+    out = out.replace(/\^\{([^{}]+)\}/g, '<sup>$1</sup>');
+
+    return out;
+  };
+
+  const formatMathContent = (expr) => {
+    let out = esc(normalizeMathTypos(String(expr || ''))
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&'));
+
+    out = out.replace(/\\+mathbb\{R\}/g, 'ℝ');
+    out = out.replace(/\\+mathbb\{N\}/g, 'ℕ');
+    out = out.replace(/\\+mathbb\{Z\}/g, 'ℤ');
+    out = out.replace(/\\+mathbb\{Q\}/g, 'ℚ');
+    out = out.replace(/\\+mathbb\{C\}/g, 'ℂ');
+    out = out.replace(/\\+mathbb\{I\}/g, '𝕀');
+
+    out = out.replace(/\\+sum(?=\s|$|[_^\{\(])/g, '&sum;');
+    out = out.replace(/\\+mid(?=\s|$|[.,;:!?\)\]])/g, '|');
+    out = out.replace(/\\+theta(?=\s|$|[.,;:!?\)\]_\^}])/g, '&theta;');
+    out = out.replace(/\\+log(?=\s|$|[\(\{])/g, 'log');
+    out = out.replace(/\\+times/g, '&times;');
+    out = out.replace(/\\+cdot/g, '&middot;');
+    out = out.replace(/\\+neq(?=\s|$|[.,;:!?\)\]])/g, '&ne;');
+    out = out.replace(/\\+geq(?=\s|$|[.,;:!?\)\]])/g, '&ge;');
+    out = out.replace(/\\+leq(?=\s|$|[.,;:!?\)\]])/g, '&le;');
+
+    out = out.replace(
+      /\\+frac\{([^{}]+)\}\{([^{}]+)\}/g,
+      '<span class="math-frac"><span class="num">$1</span><span class="den">$2</span></span>',
+    );
+
+    out = out.replace(/\^\{([^{}]+)\}/g, '<sup>$1</sup>');
+    out = out.replace(/_\{([^{}]+)\}/g, '<sub>$1</sub>');
+    out = out.replace(/\^([A-Za-z0-9])/g, '<sup>$1</sup>');
+    out = out.replace(/_([A-Za-z0-9])/g, '<sub>$1</sub>');
+
+    return out;
+  };
+
+  const raw = String(line || '');
+  const mathPlaceholders = [];
+  let rawWithMathTokens = raw.replace(/<math\s+display="(inline|block)">([\s\S]*?)<\/math>/gi, (m, display, expr) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ display: String(display || 'inline').toLowerCase(), expr: String(expr || '') });
+    return `@@MATH_${idx}@@`;
+  });
+
+  // Inline TeX math: $...$ (avoid consuming $$...$$ block style here).
+  rawWithMathTokens = rawWithMathTokens.replace(/\$(?!\$)([^\n$]+?)\$(?!\$)/g, (m, expr) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push({ display: 'inline', expr: String(expr || '') });
+    return `@@MATH_${idx}@@`;
+  });
+
+  let out = highlight(rawWithMathTokens);
+  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a class="md-link" href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  out = out.replace(/(https?:\/\/[\w\-._~:/?#\[\]@!$&'()*+,;=%]+)/g, '<a class="md-link" href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  out = out.replace(/\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b/g, '<a class="md-link" href="mailto:$1">$1</a>');
+  out = out.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  for (let i = 0; i < mathPlaceholders.length; i++) {
+    const ph = mathPlaceholders[i];
+    const expr = formatMathContent(ph.expr);
+    const html = ph.display === 'block'
+      ? `<span class="math-block">${expr}</span>`
+      : `<span class="math-inline">${expr}</span>`;
+    out = out.replace(`@@MATH_${i}@@`, html);
+  }
+
+  // Apply bare LaTeX-like formatting after protected math placeholders are restored.
+  out = renderLatexLikeInline(out);
+
+  return out;
+}
+
+function renderSimpleMarkdown(mdText) {
+  const lines = String(mdText || '').split(/\r?\n/);
+  const html = [];
+  let inList = false;
+  let inCodeBlock = false;
+  let inDollarMathBlock = false;
+  let codeLines = [];
+  let mathBlockLines = [];
+  let inBibBlock = false;
+  let bibLines = [];
+  let paraParts = [];
+  let justClosedCodeBlock = false;
+
+  const flushParagraph = () => {
+    if (!paraParts.length) return;
+    html.push(`<p>${paraParts.join('<br>')}</p>`);
+    paraParts = [];
+  };
+
+  const closeList = () => {
+    if (inList) {
+      html.push('</ul>');
+      inList = false;
+    }
+  };
+
+  const flushCodeBlock = () => {
+    if (!codeLines.length) return;
+    html.push(`<pre><code>${esc(codeLines.join('\n'))}</code></pre>`);
+    codeLines = [];
+  };
+
+  const renderMathExpr = (expr) => {
+    return esc(normalizeMathTypos(String(expr || ''))
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&'))
+      .replace(/\\sum(?=\s|$|[_^\{\(])/g, '&sum;')
+      .replace(/\\mid(?=\s|$|[.,;:!?\)\]])/g, '|')
+      .replace(/\\theta(?=\s|$|[.,;:!?\)\]_\^}])/g, '&theta;')
+      .replace(/\\log(?=\s|$|[\(\{])/g, 'log')
+      .replace(/\\times/g, '&times;')
+      .replace(/\\cdot/g, '&middot;')
+      .replace(/\\neq/g, '&ne;')
+      .replace(/\\geq/g, '&ge;')
+      .replace(/\\leq/g, '&le;');
+  };
+
+  const flushDollarMathBlock = () => {
+    if (!mathBlockLines.length) return;
+    html.push(`<span class="math-block">${renderMathExpr(mathBlockLines.join(' '))}</span>`);
+    mathBlockLines = [];
+  };
+
+  const flushBibBlock = () => {
+    if (!bibLines.length) return;
+    html.push(`<pre><code>${esc(bibLines.join('\n'))}</code></pre>`);
+    bibLines = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine || '';
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```')) {
+      if (inCodeBlock) {
+        flushCodeBlock();
+        inCodeBlock = false;
+        justClosedCodeBlock = true;
+      } else {
+        flushParagraph();
+        closeList();
+        inCodeBlock = true;
+        justClosedCodeBlock = false;
+      }
+      continue;
+    }
+
+    if (trimmed === '$$') {
+      if (inDollarMathBlock) {
+        flushDollarMathBlock();
+        inDollarMathBlock = false;
+      } else {
+        flushParagraph();
+        closeList();
+        inDollarMathBlock = true;
+      }
+      continue;
+    }
+
+    if (inDollarMathBlock) {
+      mathBlockLines.push(line);
+      continue;
+    }
+
+    const singleLineDollarMath = trimmed.match(/^\$\$(.+?)\$\$$/);
+    if (singleLineDollarMath) {
+      flushParagraph();
+      closeList();
+      html.push(`<span class="math-block">${renderMathExpr(singleLineDollarMath[1])}</span>`);
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(line);
+      continue;
+    }
+
+    // Some placeholder-expanded code blocks leave a solitary punctuation line (e.g. ".").
+    if (justClosedCodeBlock && /^([.\u00B7\u2022])$/.test(trimmed)) {
+      justClosedCodeBlock = false;
+      continue;
+    }
+    justClosedCodeBlock = false;
+
+    const isBibStart = /^@\w+\s*\{/.test(trimmed);
+    const isBibEnd = /^\}\s*,?$/.test(trimmed);
+
+    if (inBibBlock) {
+      // Stop bib block at source annotation or blank separator.
+      if (!trimmed || /^\[Source:/.test(trimmed)) {
+        flushBibBlock();
+        inBibBlock = false;
+      } else {
+        bibLines.push(line);
+        if (isBibEnd) {
+          flushBibBlock();
+          inBibBlock = false;
+        }
+        continue;
+      }
+    }
+
+    if (isBibStart) {
+      flushParagraph();
+      closeList();
+      inBibBlock = true;
+      bibLines.push(line);
+      if (isBibEnd) {
+        flushBibBlock();
+        inBibBlock = false;
+      }
+      continue;
+    }
+
+    if (!trimmed) {
+      flushParagraph();
+      closeList();
+      continue;
+    }
+
+    const h = trimmed.match(/^(#{1,4})\s+(.+)$/);
+    if (h) {
+      flushParagraph();
+      closeList();
+      const level = h[1].length;
+      html.push(`<h${level}>${inlineMarkdown(h[2])}</h${level}>`);
+      continue;
+    }
+
+    const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+    if (bullet) {
+      flushParagraph();
+      if (!inList) {
+        html.push('<ul>');
+        inList = true;
+      }
+      html.push(`<li>${inlineMarkdown(bullet[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    paraParts.push(inlineMarkdown(trimmed));
+  }
+
+  flushParagraph();
+  closeList();
+  if (inCodeBlock) {
+    flushCodeBlock();
+  }
+  if (inDollarMathBlock) {
+    flushDollarMathBlock();
+  }
+  if (inBibBlock) {
+    flushBibBlock();
+  }
+
+  return html.join('') || '<div class="no-data">No generated content.</div>';
+}
+
+function buildGenerationPanel(data) {
+  if (!data?.success) {
+    return `<div class="no-data">Generation failed: ${esc(data?.error || 'unknown error')}</div>`;
+  }
+
+  const sections = data.sections || {};
+  const score = (typeof data.repro_score === 'number')
+    ? `${Number(data.repro_score).toFixed(1)} / 22 (${((Number(data.repro_score) / 22) * 100).toFixed(1)}%)`
+    : 'Pending...';
+  const cards = Object.entries(sections).map(([name, content]) => `
+    <article class="generated-section">
+      <h3 class="generated-section-title">${esc(name)}</h3>
+      <div class="pred-text md-render generated-section-content">${renderSimpleMarkdown(content || '')}</div>
+    </article>
+  `).join('');
+
+  return `
+    <div class="score-grid">
+      <div class="score-card"><div class="k">Model</div><div class="v">${esc(data.model_id || '')}</div></div>
+      <div class="score-card"><div class="k">Reproducibility Score</div><div class="v">${score}</div></div>
+    </div>
+    <div class="generated-grid">
+      ${cards || '<div class="no-data">No generated sections.</div>'}
+    </div>
+  `;
+}
+
+function formatArtifactLabel(source) {
+  const normalized = String(source || '').trim().toLowerCase();
+  if (normalized === 'paper') return 'Paper';
+  if (normalized === 'model_card') return 'Model Card';
+  if (normalized === 'github_readme') return 'GitHub README';
+  return source ? String(source) : '';
+}
+
+function buildProgressPanel(title, event) {
+  const isClassification = String(event?.phase || '').toLowerCase() === 'classification';
+  const sourceLabel = formatArtifactLabel(event?.source || event?.source_label || '');
+  const panelTitle = isClassification && sourceLabel ? `${sourceLabel} classification` : title;
+  const totalRaw = Number(
+    isClassification
+      ? (event?.artifact_total ?? event?.total ?? 0)
+      : (event?.total ?? event?.section_total ?? event?.artifact_total ?? 0)
+  );
+  const total = Number.isFinite(totalRaw) && totalRaw > 0 ? totalRaw : 0;
+  const completedRaw = Number(
+    isClassification
+      ? (event?.artifact_completed ?? event?.completed ?? 0)
+      : (event?.completed ?? event?.artifact_completed ?? 0)
+  );
+  const completed = Number.isFinite(completedRaw) && completedRaw >= 0 ? completedRaw : 0;
+  const remainingRaw = Number(
+    isClassification
+      ? (event?.artifact_remaining ?? event?.remaining)
+      : event?.remaining
+  );
+  const remaining = Number.isFinite(remainingRaw) && remainingRaw >= 0
+    ? remainingRaw
+    : Math.max(total - completed, 0);
+  const percent = total > 0 ? Math.max(0, Math.min(100, Math.round((completed / total) * 100))) : 0;
+  const subject = isClassification
+    ? ''
+    : String(event?.section || event?.source_label || event?.source || event?.stage || '').trim();
+  const message = String(event?.message || 'Working...').trim();
+  const meta = total > 0
+    ? `${completed}/${total} complete • ${remaining} remaining`
+    : `${completed} complete`;
+
+  return `
+    <div class="progress-card">
+      <div class="progress-head">
+        <div class="progress-title">${esc(panelTitle)}</div>
+        <div class="progress-meta">${esc(meta)}</div>
+      </div>
+      ${subject ? `<div class="progress-subtitle">${esc(subject)}</div>` : ''}
+      <div class="progress-bar"><span style="width:${percent}%"></span></div>
+      <div class="progress-message">${esc(message)}</div>
+    </div>
+  `;
+}
+
+async function readNdjsonStream(response, onEvent) {
+  if (!response.body) {
+    throw new Error('Streaming is not supported by this browser.');
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (value) {
+      buffer += decoder.decode(value, { stream: true });
+    }
+
+    let newlineIndex = buffer.indexOf('\n');
+    while (newlineIndex >= 0) {
+      const rawLine = buffer.slice(0, newlineIndex).trim();
+      buffer = buffer.slice(newlineIndex + 1);
+      newlineIndex = buffer.indexOf('\n');
+      if (!rawLine) continue;
+
+      const event = JSON.parse(rawLine);
+      if (typeof onEvent === 'function') {
+        onEvent(event);
+      }
+      if (event.type === 'result') {
+        return event.data;
+      }
+      if (event.type === 'error') {
+        throw new Error(event.message || 'unknown error');
+      }
+    }
+
+    if (done) {
+      break;
+    }
+  }
+
+  const tail = buffer.trim();
+  if (tail) {
+    const event = JSON.parse(tail);
+    if (typeof onEvent === 'function') {
+      onEvent(event);
+    }
+    if (event.type === 'result') {
+      return event.data;
+    }
+    if (event.type === 'error') {
+      throw new Error(event.message || 'unknown error');
+    }
+  }
+
+  throw new Error('The streaming response ended before a final result was received.');
+}
+
+async function loadSampleCardPreview() {
+  const selectedModelId = $('#sampleSelect')?.value?.trim() || '';
+  const modelId = selectedModelId;
+  const status = $('#status');
+  if (!modelId) {
+    status.className = 'status error';
+    status.textContent = '❌ Select a sample model first.';
+    return;
+  }
+  setBusyState(true);
+  status.className = 'status';
+  status.textContent = '⏳ Loading sample generated card preview...';
+
+  try {
+    const query = modelId ? `?model_id=${encodeURIComponent(modelId)}` : '';
+    const res = await fetch(`/sample-generated-card${query}`);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    const sample = await res.json();
+    $('#results').style.display = 'block';
+    setTabVisible('gen', true);
+    const hasSavedEval = !!sample.repro_report;
+    setTabVisible('ev', hasSavedEval);
+
+    $('#panel-gen').innerHTML = buildGenerationPanel({
+      ...sample,
+      repro_score: sample.repro_score,
+      success: true,
+    });
+
+    $('#panel-mc').innerHTML = buildChunkArtifactPanel(sample.model_card || {}, 'model card');
+    $('#panel-gh').innerHTML = buildChunkArtifactPanel(sample.github_readme || {}, 'github readme');
+    $('#panel-pp').innerHTML = buildChunkArtifactPanel(sample.paper || {}, 'paper');
+
+    if (hasSavedEval) {
+      $('#panel-ev').innerHTML = buildEvaluationPanel(sample.repro_report);
+    }
+
+    showTab('gen');
+    status.textContent = `✅ Loaded sample preview for ${sample.model_id}.`;
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = `❌ Could not load sample preview: ${e.message || 'unknown error'}`;
+  } finally {
+    setBusyState(false);
+  }
+}
+
+loadSampleList();
+
+function setBusyState(isBusy, label) {
+  const generateBtn = $('#generateBtn');
+  const sampleBtn = $('#sampleBtn');
+  generateBtn.disabled = isBusy;
+  sampleBtn.disabled = isBusy;
+  if (label) {
+    if (label === 'generate') generateBtn.textContent = 'Generating…';
+  }
+  if (!isBusy) {
+    generateBtn.textContent = 'Generate';
+  }
+}
+
+function showTab(panel) {
+  document.querySelector(`.tab[data-panel="${panel}"]`)?.click();
+}
+
+function setTabVisible(panel, visible) {
+  const tab = document.querySelector(`.tab[data-panel="${panel}"]`);
+  if (!tab) return;
+  tab.classList.toggle('hidden', !visible);
+}
+
+function resetAsyncPanels() {
+  setTabVisible('gen', false);
+  setTabVisible('ev', false);
+  $('#panel-gen').innerHTML = '<div class="no-data">Generation has not started yet.</div>';
+  $('#panel-ev').innerHTML = '<div class="no-data">Scoring has not started yet.</div>';
+}
+
+// ── Main run function ──────────────────────────────────────────
+async function run() {
+  return generateModelCard();
+}
+
+async function generateModelCard() {
+  const modelId = $('#modelInput')?.value?.trim() || $('#sampleSelect')?.value?.trim() || '';
+  if (!modelId) {
+    const status = $('#status');
+    status.className = 'status error';
+    status.textContent = '❌ Select a sample model before generating.';
+    return;
+  }
+
+  const status = $('#status');
+  setBusyState(true, 'generate');
+  status.className = 'status';
+  status.textContent = '⏳ Step 1/3: Retrieving artifacts and preprocessing...';
+  $('#results').style.display = 'none';
+  resetAsyncPanels();
+
+  const modalEndpointUrl = $('#modalUrlInput').value.trim();
+
+  try {
+    const preprocessRes = await fetch('/preprocess', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model_id: modelId,
+        summarize_tables: useTableSummarization(),
+      }),
+    });
+
+    if (!preprocessRes.ok) {
+      const err = await preprocessRes.json().catch(() => ({ detail: preprocessRes.statusText }));
+      throw new Error(err.detail || `HTTP ${preprocessRes.status}`);
+    }
+
+    const pre = await preprocessRes.json();
+
+    $('#panel-mc').innerHTML = buildChunkArtifactPanel({
+      source_link: null,
+      links: pre?.model_card?.links || [],
+      paragraphs_split: pre?.model_card?.paragraphs_split || [],
+    }, 'model card');
+    $('#panel-gh').innerHTML = buildChunkArtifactPanel({
+      source_link: pre?.primary_github_url || null,
+      links: pre?.github_readme?.links || [],
+      paragraphs_split: pre?.github_readme?.paragraphs_split || [],
+    }, 'github readme');
+    $('#panel-pp').innerHTML = buildChunkArtifactPanel({
+      source_link: pre?.primary_paper_url || null,
+      links: Object.values(pre?.paper?.links_map || {}),
+      paragraphs_split: pre?.paper?.paragraphs_split || [],
+    }, 'paper');
+
+    $('#results').style.display = 'block';
+    showTab('mc');
+    status.className = 'status';
+    status.textContent = '⏳ Step 2/3: Classification — Paper, Model Card, and GitHub README are starting...';
+    $('#panel-gen').innerHTML = buildProgressPanel('Classification', {
+      completed: 0,
+      total: 0,
+      remaining: 0,
+      message: 'Waiting for classification to start...',
+    });
+    $('#panel-ev').innerHTML = buildProgressPanel('Classification', {
+      completed: 0,
+      total: 0,
+      remaining: 0,
+      message: 'Waiting for classification to start...',
+    });
+
+    let workflowStage = 'classification';
+    let classificationStatus = 'starting';
+    let generationStatus = 'queued';
+    let scoringStatus = 'queued';
+    let generated = null;
+    let scored = null;
+
+    const refreshStatus = () => {
+      if (workflowStage === 'classification') {
+        const detail = classificationStatus || 'Classification is running...';
+        status.textContent = `⏳ Step 2/3: Classification — ${detail}`;
+        return;
+      }
+
+      const parts = [];
+      if (generationStatus) {
+        parts.push(`Generation: ${generationStatus}`);
+      }
+      if (scoringStatus) {
+        parts.push(`Scoring: ${scoringStatus}`);
+      }
+      status.textContent = parts.length
+        ? `⏳ Step 3/3: ${parts.join(' | ')}`
+        : '⏳ Step 3/3: Running generation and reproducibility scoring in parallel...';
+    };
+
+    const updateProgressPanel = (slot, event) => {
+      const panel = slot === 'gen' ? $('#panel-gen') : $('#panel-ev');
+      if (!panel) return;
+      const title = event?.phase === 'classification'
+        ? 'Classification'
+        : slot === 'gen'
+          ? 'Generation'
+          : 'Scoring';
+      panel.innerHTML = buildProgressPanel(title, event);
+      const latestStatus = String(event?.message || '').trim();
+      if (event?.phase === 'classification') {
+        const artifactLabel = formatArtifactLabel(event?.source || event?.source_label || 'artifact');
+        const artifactCompleted = Number(event?.artifact_completed ?? event?.completed ?? 0) || 0;
+        const artifactTotal = Number(event?.artifact_total ?? event?.total ?? 0) || 0;
+        const artifactRemaining = Number(event?.artifact_remaining ?? event?.remaining ?? 0) || 0;
+        classificationStatus = `${artifactLabel}: ${artifactCompleted}/${artifactTotal} complete, ${artifactRemaining} remaining`;
+      } else {
+        workflowStage = 'generation_scoring';
+        if (slot === 'gen') {
+          generationStatus = latestStatus || generationStatus;
+        } else {
+          scoringStatus = latestStatus || scoringStatus;
+        }
+      }
+      refreshStatus();
+    };
+
+    refreshStatus();
+
+    const genReq = fetch('/generate-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model_id: modelId,
+        summarize_tables: useTableSummarization(),
+        ...classifierSettingsPayload(),
+        generator_model_name: $('#generatorModelInput').value.trim() || 'google/gemini-2.5-flash',
+      }),
+    });
+
+    const evalReq = fetch('/evaluate-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model_id: modelId,
+        summarize_tables: useTableSummarization(),
+        ...classifierSettingsPayload(),
+        modal_model_name: $('#evaluatorModelInput').value.trim() || 'openai/gpt-oss-20b',
+        modal_endpoint_url: modalEndpointUrl || null,
+      }),
+    });
+
+    const genTask = genReq.then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await readNdjsonStream(res, (event) => {
+        if (event?.type === 'progress') {
+          updateProgressPanel('gen', event);
+        }
+      });
+      generated = data;
+      setTabVisible('gen', true);
+      $('#panel-gen').innerHTML = buildGenerationPanel({ ...data, repro_score: scored?.total_score });
+      generationStatus = 'complete';
+      refreshStatus();
+    }).catch((e) => {
+      setTabVisible('gen', true);
+      $('#panel-gen').innerHTML = `<div class="no-data">Generation failed: ${esc(e.message || 'unknown error')}</div>`;
+      generationStatus = `failed: ${e.message || 'unknown error'}`;
+      refreshStatus();
+    });
+
+    const evalTask = evalReq.then(async (res) => {
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+      const data = await readNdjsonStream(res, (event) => {
+        if (event?.type === 'progress') {
+          updateProgressPanel('ev', event);
+        }
+      });
+      scored = data;
+      setTabVisible('ev', true);
+      $('#panel-ev').innerHTML = buildEvaluationPanel(data);
+      if (generated) {
+        $('#panel-gen').innerHTML = buildGenerationPanel({ ...generated, repro_score: data.total_score });
+      }
+      scoringStatus = data.success
+        ? 'complete'
+        : `failed: ${data.error || 'unknown error'}`;
+      refreshStatus();
+    }).catch((e) => {
+      setTabVisible('ev', true);
+      $('#panel-ev').innerHTML = `<div class="no-data">Evaluation failed: ${esc(e.message || 'unknown error')}</div>`;
+      scoringStatus = `failed: ${e.message || 'unknown error'}`;
+      refreshStatus();
+    });
+
+    await Promise.allSettled([genTask, evalTask]);
+
+    if (generated) {
+      showTab('gen');
+    } else if (scored) {
+      showTab('ev');
+    }
+
+    const tuningMsg = tuningStatusSummary(generated?.tuning_status || scored?.tuning_status);
+    if (tuningMsg && !status.classList.contains('error')) {
+      status.textContent += ` — ${tuningMsg}`;
+    }
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = '❌ ' + e.message;
+  } finally {
+    setBusyState(false);
+  }
+}
+</script>
+</body>
+</html>
