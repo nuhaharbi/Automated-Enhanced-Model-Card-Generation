@@ -4,7 +4,7 @@ Generate Enhanced Model Cards (EMCs) for Hugging Face models. The repository con
 
 - A FastAPI web app for single-model generation.
 - Shared pipeline components in `retriever/`, `preprocessor/`, `classifier/`, `evaluator/`, and `generator/`.
-- The full dataset is maintained in a separate GitHub companion repository so the code repo stays lightweight.
+- The full dataset is maintained in a separate GitHub companion repository.
 
 ## Setup
 
@@ -34,7 +34,7 @@ Follow the `Setup` section first if you have not already created the virtual env
 - `OPENROUTER_API_KEY` is required only if you want to use OpenRouter-backed embeddings or generator models. You can also enter the key directly in the web UI when you select the OpenRouter backend.
 - `MODAL_EVALUATOR_URL` is required only if you want to run the reproducibility scorer without typing the endpoint into the web UI.
 
-### 3. Provide an evaluator endpoint for full generation and evaluation
+### 3. Provide an evaluator endpoint for reproducibility scoring
 
 The web app does not ship with a private evaluator endpoint. Deploy your own evaluator and then paste its URL into the `Modal Evaluator Endpoint` field in the UI, or set `MODAL_EVALUATOR_URL`.
 
@@ -52,7 +52,7 @@ If your endpoint is protected, also set `MODAL_EVALUATOR_API_KEY`.
 uvicorn webapp.app:app --reload
 ```
 
-Open `http://127.0.0.1:8000` in your browser. The interactive API docs are at `http://127.0.0.1:8000/docs`.
+Open `http://127.0.0.1:8000` in your browser.
 
 ### 5. Browse the included sample cards
 

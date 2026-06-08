@@ -25,9 +25,8 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Local Copilot instructions should stay out of the GitHub upload.
-.github/copilot-instructions.md
 
 # Dataset tree lives in the separate dataset repository.
 Datasets/*
 
+images/

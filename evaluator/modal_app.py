@@ -45,7 +45,7 @@ with image.imports():
 
 @app.cls(
     image=image,
-    gpu="A10G",
+    gpu="H100",
     timeout=60 * 20,
     scaledown_window=60 * 10,
 )

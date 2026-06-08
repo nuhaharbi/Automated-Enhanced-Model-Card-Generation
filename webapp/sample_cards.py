@@ -12,7 +12,7 @@ from classifier.models import ClassificationResult
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _SAMPLE_GENERATED_CARDS_PATH = _PROJECT_ROOT / "outputs" / "full_pipeline_eval" / "task_stratified_generated_cards.jsonl"
 _SAMPLE_REPRO_REPORTS_PATH = _PROJECT_ROOT / "outputs" / "full_pipeline_eval" / "task_stratified_reproducibility_reports_full.jsonl"
-_PREVIEW_DATASET_DIR = _PROJECT_ROOT / "Datasets" / "sample_preview"
+_PREVIEW_DATASET_DIR = _PROJECT_ROOT / "sample_preview"
 _POOL_CSV_PATH = _PREVIEW_DATASET_DIR / "new_all_repos_both_links.csv"
 _PREPROCESSED_MC_CSV_PATH = _PREVIEW_DATASET_DIR / "new_preprocessed_mc.csv"
 _PREPROCESSED_PAPERS_CSV_PATH = _PREVIEW_DATASET_DIR / "new_preprocessed_papers_all.csv"
