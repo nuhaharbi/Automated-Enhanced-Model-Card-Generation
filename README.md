@@ -4,7 +4,7 @@ Generate Enhanced Model Cards (EMCs) for Hugging Face models. The repository con
 
 - A FastAPI web app for single-model generation.
 - Shared pipeline components in `retriever/`, `preprocessor/`, `classifier/`, `evaluator/`, and `generator/`.
-- The full dataset is maintained in a separate GitHub companion repository so the code repo stays lightweight.
+- The full dataset is maintained in a separate GitHub companion repository.
 
 ## Setup
 
