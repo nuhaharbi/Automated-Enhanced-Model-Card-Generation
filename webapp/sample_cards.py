@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from classifier.models import ClassificationResult
+from preprocessor.core import preprocess_paper
+from retriever.core import retrieve_model_artifacts
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _SAMPLE_GENERATED_CARDS_PATH = _PROJECT_ROOT / "outputs" / "full_pipeline_eval" / "task_stratified_generated_cards.jsonl"
@@ -593,6 +595,23 @@ def _build_csv_backed_artifact_chunks_for_model(model_id: str) -> dict[str, dict
     mc_payload = cache["mc_sources"].get(model_id, {})
     pp_payload = cache["paper_sources_by_link"].get(paper_link_norm, {})
     gh_payload = cache["gh_sources_by_link"].get(github_link_norm, {})
+
+    if not pp_payload.get("paragraphs_split") and paper_link_norm:
+        try:
+            retrieval = retrieve_model_artifacts(model_id)
+            if retrieval.paper_content:
+                paper = preprocess_paper(
+                    retrieval.paper_content,
+                    paper_json=retrieval.paper_json,
+                    declared_language=retrieval.card_data.get("language"),
+                    summarize_tables=False,
+                )
+                pp_payload = {
+                    "links": list(paper.links_map.values()),
+                    "paragraphs_split": list(paper.paragraphs_split),
+                }
+        except Exception:
+            pass
 
     return {
         "model_card": {
