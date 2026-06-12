@@ -440,6 +440,11 @@ def _collect_generation_references(
     source_placeholder_maps: dict[str, dict[str, str]] | None = None,
 ) -> dict[str, list[str]]:
     refs: dict[str, list[str]] = {}
+    citation_tag_by_source = {
+        "paper": "RP",
+        "model_card": "MC",
+        "github_readme": "GH",
+    }
 
     all_preds = (
         cls.paper.predictions
@@ -457,7 +462,8 @@ def _collect_generation_references(
                 source_placeholder_maps=source_placeholder_maps,
             )
 
-        refs.setdefault(label, []).append(f"{paragraph} [Source: {pred.source}]")
+        citation_tag = citation_tag_by_source.get(pred.source, pred.source.upper())
+        refs.setdefault(label, []).append(f"{paragraph} [Source: {citation_tag}]")
 
     return refs
 

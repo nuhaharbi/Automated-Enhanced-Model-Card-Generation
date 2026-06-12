@@ -12,6 +12,15 @@ from typing import Any, Callable
 from generator.models import EnhancedModelCardResult
 
 _RESOURCE_PATH = Path(__file__).parent / "resources" / "section_specs.json"
+_CITATION_TAG_BY_SOURCE = {
+    "paper": "RP",
+    "model_card": "MC",
+    "github_readme": "GH",
+}
+
+
+def _citation_tag_for_source(source: str) -> str:
+    return _CITATION_TAG_BY_SOURCE.get(source, source.upper())
 
 
 def _load_resource() -> dict[str, Any]:
